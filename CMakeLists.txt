@@ -41,7 +41,13 @@ option(YS_BUILD_RUNTIME "BUILD RUNTIME" ON)
 
 
 if (YS_BUILD_RUNTIME)
-    add_executable(ys_runtime ${ys_runtime_src})
-    target_link_libraries(ys_runtime ${CMAKE_DL_LIBS} ${CMAKE_THREAD_LIBS_INIT} ${ST_CXXFS_LIBS})
+    add_library(ys_runtime STATIC ${ys_runtime_src})
+    target_include_directories(ys_runtime PUBLIC ${PROJECT_SOURCE_DIR}/src)
+    target_compile_options(ys_runtime PRIVATE
+     $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>>:
+          -Wall>
+     $<$<CXX_COMPILER_ID:MSVC>:
+          /W4>)
+    SET_TARGET_PROPERTIES(ys_runtime PROPERTIES PREFIX "")
     target_include_directories(ys_runtime PUBLIC ${PROJECT_SOURCE_DIR}/src)
 endif ()
