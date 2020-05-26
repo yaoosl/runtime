@@ -41,6 +41,7 @@ option(YS_BUILD_RUNTIME "BUILD RUNTIME" ON)
 
 
 if (YS_BUILD_RUNTIME)
+    add_compile_definitions(YAOOSL_RUNTIME)
     add_library(ys_runtime STATIC ${ys_runtime_src})
     target_include_directories(ys_runtime PUBLIC ${PROJECT_SOURCE_DIR}/src)
     target_compile_options(ys_runtime PRIVATE
