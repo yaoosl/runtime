@@ -1,0 +1,79 @@
+prefix Yaoosl;
+
+class My.Exception : Exception
+{
+    public Exception() {
+        Exception.Exception("ExceptionA") with this;
+    }
+}
+class My.Test
+{
+    private String MyString;
+    public Test(String str)
+    {
+        this.MyString = str;
+    }
+    public void Start()
+    {
+        Console.WriteLine(this.MyString);
+    }
+}
+
+Console.WriteLine("CLASS");
+var test1 = new My.Test("test1");
+test1.Start();
+var test2 = new My.Test("test2");
+test2.Start();
+///////////////////////////////////////
+Console.WriteLine("IF ELSE");
+var test3 = 1 + 0;
+if (test3 == 0)
+{
+    Console.WriteLine("0");
+}
+else if (test3 == 1)
+{
+    Console.WriteLine("1");
+}
+else if (test3 == 2)
+{
+    Console.WriteLine("2");
+}
+///////////////////////////////////////
+Console.WriteLine("FOR STEP");
+for (var i = 0; i < 10; i++)
+{
+    Console.WriteLine(i.ToString());
+}
+///////////////////////////////////////
+Console.WriteLine("WHILE");
+var i = 0;
+while (i < 10)
+{
+    Console.WriteLine(i.ToString());
+    i++;
+}
+///////////////////////////////////////
+Console.WriteLine("DO WHILE");
+var i = 0;
+do
+{
+    Console.WriteLine(i.ToString());
+    i++;
+} while (i < 10);
+
+try
+{
+    throw new My.Exception();
+    throw new Exception("test");
+}
+catch (Exception ex)
+{
+    Console.Write("Catch Exception: ");
+    Console.WriteLine(ex.Message);
+}
+catch (My.Exception ex)
+{
+    Console.Write("Catch My.Exception: ");
+    Console.WriteLine(ex.Message);
+}
