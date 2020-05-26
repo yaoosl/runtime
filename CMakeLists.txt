@@ -21,7 +21,9 @@ set(RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/output)
 
 # Source Files
 file(GLOB ys_runtime_src 
-    "${PROJECT_SOURCE_DIR}/src/*.h" "${PROJECT_SOURCE_DIR}/src/*.cpp" "${PROJECT_SOURCE_DIR}/src/*.c"
+    "${PROJECT_SOURCE_DIR}/src/yaoosl/runtime/*.h"
+	"${PROJECT_SOURCE_DIR}/src/yaoosl/runtime/*.cpp"
+	"${PROJECT_SOURCE_DIR}/src/yaoosl/runtime/*.c"
     "${CMAKE_CURRENT_BINARY_DIR}/src/git_sha1.cpp"
 )
 
