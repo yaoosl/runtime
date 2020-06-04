@@ -188,7 +188,7 @@ extern int yaoosl_debug;
             size_t code_line;
             size_t code_column;
             const char* code_file;
-            uint16_t code_file_len;
+            size_t code_file_len;
             
             bool is_constructor;
             bool is_void;

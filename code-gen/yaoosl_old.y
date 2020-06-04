@@ -48,7 +48,7 @@
         #define YY_EXTRA_TYPE void *
         #endif
         
-        YY_EXTRA_TYPE yyget_extra(yyscan_t yyscanner);
+        YY_EXTRA_TYPE yaoosl_get_extra(yyscan_t yyscanner);
         void yaoosl_set_extra(YY_EXTRA_TYPE user_defined, yyscan_t yyscanner);
         
         int yaoosl_lex_init (yyscan_t* scanner);
