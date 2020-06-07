@@ -22,7 +22,7 @@ extern "C" {
 	{
 		size_t start;
 		size_t usedtype_index;
-	} yaoosl_code_section_catch;
+	} yaoosl_code_sector_catch;
 
 	// Sector information for eg. Try-Catch-Finally blocks.
 	typedef struct yaoosl_code_sector
@@ -34,7 +34,7 @@ extern "C" {
 		yaoosl_code_sector_catch * catch_sectors;
 
 		size_t finally_start;
-	};
+	} yaoosl_code_sector;
 
 	// Contains debug informations for a full code-page
 	// To find the correcto ne, look up the best-match for `start` compared
@@ -49,14 +49,14 @@ extern "C" {
 		uint32_t file_length;
 		size_t  file_path_length;
 		char *  file_path;
-	};
+	} yaoosl_code_debug;
 
 	typedef struct yaoosl_code_page
 	{
 		// Typemap where the used types get put into.
 		size_t	        usedtypes_capacity;
 		size_t	        usedtypes_size;
-		yaoosl_class ** usedtypes;
+		struct yaoosl_class** usedtypes;
 
 		// Sector informations for this code-page
 		size_t               sector_capacity;
@@ -72,6 +72,10 @@ extern "C" {
 		size_t    code_capactiy;
 		size_t    code_size;
 		uint8_t * code;
+
+		// The scope-slots required by this page if executed
+		// from the very start
+		size_t scope_slots;
 	} yaoosl_code_page;
 
 	yaoosl_code_page* yaoosl_code_page_deserialize(const char* fpath);
