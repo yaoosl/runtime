@@ -44,6 +44,33 @@ yaoosl_scope* yaoosl_scope_create(size_t slots, yaoosl_code_page* page)
 	return scope;
 }
 
+#pragma region Code Generating Macros
+#define OPEXEC0_PRE(PRE, OP)\
+case YVT_DOUBLE:  OP PRE ## as.d      ; break;\
+case YVT_BOOLEAN: OP PRE ## as.flag   ; break;\
+case YVT_FLOAT:   OP PRE ## as.f      ; break;\
+case YVT_INT8:    OP PRE ## as.int8   ; break;\
+case YVT_INT16:   OP PRE ## as.int16  ; break;\
+case YVT_INT32:   OP PRE ## as.int32  ; break;\
+case YVT_INT64:   OP PRE ## as.int64  ; break;\
+case YVT_UINT8:   OP PRE ## as.uint8  ; break;\
+case YVT_UINT16:  OP PRE ## as.uint16 ; break;\
+case YVT_UINT32:  OP PRE ## as.uint32 ; break;\
+case YVT_UINT64:  OP PRE ## as.uint64 ; break;
+#define OPEXEC0_POST(PRE, OP)\
+case YVT_DOUBLE:  PRE ## as.d      OP ; break;\
+case YVT_BOOLEAN: PRE ## as.flag   OP ; break;\
+case YVT_FLOAT:   PRE ## as.f      OP ; break;\
+case YVT_INT8:    PRE ## as.int8   OP ; break;\
+case YVT_INT16:   PRE ## as.int16  OP ; break;\
+case YVT_INT32:   PRE ## as.int32  OP ; break;\
+case YVT_INT64:   PRE ## as.int64  OP ; break;\
+case YVT_UINT8:   PRE ## as.uint8  OP ; break;\
+case YVT_UINT16:  PRE ## as.uint16 OP ; break;\
+case YVT_UINT32:  PRE ## as.uint32 OP ; break;\
+case YVT_UINT64:  PRE ## as.uint64 OP ; break;
+#pragma endregion
+
 
 
 #define ERR_MSG_UNKNOWN_INSTRUCTION "Unknown Instruction."
@@ -54,6 +81,7 @@ yaoosl_scope* yaoosl_scope_create(size_t slots, yaoosl_code_page* page)
 #define ERR_MSG_STACK_CORRUPTION_OPERATOR_CALLABLE "Stack Corruption. Operator ops are not possible on callables."
 #define ERR_MSG_STACK_CORRUPTION_OPERATOR_PROPERTY "Stack Corruption. Operator ops cannot execute on nested properties."
 #define ERR_MSG_OPERATOR_NOT_IMPLEMENTED "Operator not implemented."
+
 
 // False if NullPointerException (NPE) could not be catched by any means
 static bool yaoosl_runtime_throw_NPE(yaoosl_runtime* yvm) {}
@@ -157,8 +185,8 @@ static bool lookup_method_no_args(yaoosl_method* out_method, yaoosl_method_group
 
 /*
     returns:
-        - true: method group found
-        - false: method group not found
+        true: method group found
+        false: method group not found
 */
 static bool lookup_op_method_group(yaoosl_class* type, enum yaoosl_operator op, yaoosl_method_group* out_method_group)
 {
@@ -177,9 +205,9 @@ static bool lookup_op_method_group(yaoosl_class* type, enum yaoosl_operator op, 
 }
 /*
     returns:
-        - 0: on success
-        - 1: if ERR_MSG_VALUE_STACK_EMPTY
-        - 2: if out-of-memory
+        0: success
+        1: ERR_MSG_VALUE_STACK_EMPTY
+        2: out-of-memory
 */
 static int call_method(yaoosl_runtime* yvm, yaoosl_class* owning_type, yaoosl_method method, yaoosl_scope** out_scope)
 {
@@ -201,30 +229,64 @@ static int call_method(yaoosl_runtime* yvm, yaoosl_class* owning_type, yaoosl_me
     return 0;
 }
 
-#define OPEXEC0_PRE(PRE, OP)\
-case YVT_DOUBLE:  OP PRE ## as.d      ; break;\
-case YVT_BOOLEAN: OP PRE ## as.flag   ; break;\
-case YVT_FLOAT:   OP PRE ## as.f      ; break;\
-case YVT_INT8:    OP PRE ## as.int8   ; break;\
-case YVT_INT16:   OP PRE ## as.int16  ; break;\
-case YVT_INT32:   OP PRE ## as.int32  ; break;\
-case YVT_INT64:   OP PRE ## as.int64  ; break;\
-case YVT_UINT8:   OP PRE ## as.uint8  ; break;\
-case YVT_UINT16:  OP PRE ## as.uint16 ; break;\
-case YVT_UINT32:  OP PRE ## as.uint32 ; break;\
-case YVT_UINT64:  OP PRE ## as.uint64 ; break;
-#define OPEXEC0_POST(PRE, OP)\
-case YVT_DOUBLE:  PRE ## as.d      OP ; break;\
-case YVT_BOOLEAN: PRE ## as.flag   OP ; break;\
-case YVT_FLOAT:   PRE ## as.f      OP ; break;\
-case YVT_INT8:    PRE ## as.int8   OP ; break;\
-case YVT_INT16:   PRE ## as.int16  OP ; break;\
-case YVT_INT32:   PRE ## as.int32  OP ; break;\
-case YVT_INT64:   PRE ## as.int64  OP ; break;\
-case YVT_UINT8:   PRE ## as.uint8  OP ; break;\
-case YVT_UINT16:  PRE ## as.uint16 OP ; break;\
-case YVT_UINT32:  PRE ## as.uint32 OP ; break;\
-case YVT_UINT64:  PRE ## as.uint64 OP ; break;
+/*
+    returns:
+        0: success
+        1: ERR_MSG_VALUE_STACK_EMPTY
+        2: Null Pointer Exception
+        3: out-of-memory
+        4: Not Implemented Exception
+        5: ERR_MSG_STACK_CORRUPTION_OPERATOR_PROPERTY
+        6: ERR_MSG_STACK_CORRUPTION_OPERATOR_CALLABLE
+*/
+static int handle_op_r0(yaoosl_runtime* yvm, yaoosl_scope* scope0, enum yaoosl_operator operator)
+{
+    yaoosl_value value0;
+    yaoosl_method_group method_group;
+    yaoosl_method method;
+    yaoosl_scope* scope1;
+    if (!pop_value_stack(yvm, &value0)) { return 1; }
+    switch (value0.type)
+    {
+    case YVT_REFERENCE: {
+        if (!value0.as.reference) // Check if reference is null
+        {
+            return 2;
+        }
+        if (lookup_op_method_group(value0.as.reference->type, operator, &method_group))
+        {
+            // Lookup matching method in method-group
+            if (lookup_method_no_args(&method, method_group, value0.as.reference->type, scope0))
+            {
+                switch (call_method(yvm, value0.as.reference->type, method, &scope1))
+                {
+                case 1: return 1;
+                case 2: return 3;
+                }
+            }
+            else
+            {
+                return 4;
+            }
+        }
+        else
+        {
+            return 4;
+        }
+    } break;
+    case YVT_PROPERTY: {
+        switch (value0.as.prop.value->type)
+        {
+            OPEXEC0_POST(value0.as.prop.value->, ++)
+        default:
+            return 5;
+        }
+    } break;
+    case YVT_CALLABLE: return 6;
+        OPEXEC0_POST(value0., ++)
+    }
+}
+
 
 enum yaoosl_retcde yaoosl_runtime_execute(yaoosl_runtime* yvm, yaoosl_code_page* page, size_t offset)
 {
@@ -242,8 +304,19 @@ enum yaoosl_retcde yaoosl_runtime_execute(yaoosl_runtime* yvm, yaoosl_code_page*
     yaoosl_method method;
     yaoosl_class* typeptr;
     bool flag = false;
+    yaoosl_runtime_push_scope(yvm, scope0);
 	while (cur_scope < yvm->scopes_size)
 	{
+        if (scope0->position >= scope0->position_end)
+        {
+            free(scope0);
+            yvm->scopes_size--;
+            if (yvm->scopes_size > 0)
+            {
+                scope0 = yvm->scopes[yvm->scopes_size - 1];
+            }
+            continue;
+        }
 		opcode = *(scope0->position++);
 		switch (opcode)
 		{
@@ -416,44 +489,14 @@ enum yaoosl_retcde yaoosl_runtime_execute(yaoosl_runtime* yvm, yaoosl_code_page*
 #pragma endregion
 #pragma region Operators
         case YOPC_INC_r0: {
-            if (!pop_value_stack(yvm, &value0))
-            { if (!yvm->fatal_callback || yvm->fatal_callback(yvm, opcode, ERR_MSG_VALUE_STACK_EMPTY)) { return YSRC_FATAL; } break; }
-            switch (value0.type)
+            switch (handle_op_r0(yvm, scope0, YOP_INC_r0))
             {
-            case YVT_REFERENCE: {
-                if (!value0.as.reference) // Check if reference is null
-                { if (!yaoosl_runtime_throw_NPE(yvm)) { return YSRC_ERROR; } break; }
-                if (lookup_op_method_group(value0.as.reference->type, YOP_INC_r0, &method_group))
-                {
-                    // Lookup matching method in method-group
-                    if (lookup_method_no_args(&method, method_group, value0.as.reference->type, scope0))
-                    {
-                        switch (call_method(yvm, value0.as.reference->type, method, &scope1))
-                        {
-                        case 1: if (!yvm->fatal_callback || yvm->fatal_callback(yvm, opcode, ERR_MSG_VALUE_STACK_EMPTY)) { return YSRC_FATAL; } flag = true; break;
-                        case 2: return YSRC_OUT_OF_MEMORY;
-                        }
-                    }
-                    else
-                    {
-                        if (!yaoosl_runtime_throw_NIE(yvm)) { return YSRC_ERROR; } break;
-                    }
-                }
-                else
-                {
-                    if (!yaoosl_runtime_throw_NIE(yvm)) { return YSRC_ERROR; } break;
-                }
-            } break;
-            case YVT_PROPERTY: {
-                switch (value0.as.prop.value->type)
-                {
-                    OPEXEC0_POST(value0.as.prop.value->, ++)
-                default:
-                    if (!yvm->fatal_callback || yvm->fatal_callback(yvm, opcode, ERR_MSG_STACK_CORRUPTION_OPERATOR_PROPERTY)) { return YSRC_FATAL; } break;
-                }
-            } break;
-            case YVT_CALLABLE: if (!yvm->fatal_callback || yvm->fatal_callback(yvm, opcode, ERR_MSG_STACK_CORRUPTION_OPERATOR_CALLABLE)) { return YSRC_FATAL; } break;
-            OPEXEC0_POST(value0., ++)
+            case 1: if (!yvm->fatal_callback || yvm->fatal_callback(yvm, opcode, ERR_MSG_VALUE_STACK_EMPTY)) { return YSRC_FATAL; } continue;
+            case 2: if (!yaoosl_runtime_throw_NPE(yvm)) { return YSRC_ERROR; } continue;
+            case 3: return YSRC_OUT_OF_MEMORY;
+            case 4: if (!yaoosl_runtime_throw_NIE(yvm)) { return YSRC_ERROR; } continue;
+            case 5: if (!yvm->fatal_callback || yvm->fatal_callback(yvm, opcode, ERR_MSG_STACK_CORRUPTION_OPERATOR_PROPERTY)) { return YSRC_FATAL; } continue;
+            case 6: if (!yvm->fatal_callback || yvm->fatal_callback(yvm, opcode, ERR_MSG_STACK_CORRUPTION_OPERATOR_CALLABLE)) { return YSRC_FATAL; } continue;
             }
         } break;
         case YOPC_DEC_r0: {
