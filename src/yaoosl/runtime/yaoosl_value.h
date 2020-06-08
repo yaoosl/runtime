@@ -45,6 +45,40 @@ extern "C" {
         YVT_UINT32,
         YVT_UINT64,
     };
+    enum yaoosl_operator
+    {
+        YOP_NA,
+        YOP_INC_r0,
+        YOP_DEC_r0,
+        YOP_NOT_v1,
+        YOP_ADD_v2,
+        YOP_ADD_r1,
+        YOP_SUB_v2,
+        YOP_SUB_r1,
+        YOP_MUL_v2,
+        YOP_MUL_r1,
+        YOP_DIV_v2,
+        YOP_DIV_r1,
+        YOP_BIT_INV_v2,
+        YOP_BIT_INV_r1,
+        YOP_BIT_OR_v2,
+        YOP_BIT_OR_r1,
+        YOP_BIT_XOR_v2,
+        YOP_BIT_XOR_r1,
+        YOP_BIT_AND_v2,
+        YOP_BIT_AND_r1,
+        YOP_LOG_OR_v2,
+        YOP_LOG_AND_v2,
+        YOP_LOG_EQUAL_v2,
+        YOP_LOG_NOTEQUAL_v2,
+        YOP_LOG_LESS_THEN_v2,
+        YOP_LOG_GREATER_THEN_v2,
+        YOP_MOD_v2,
+        YOP_LSHIFT_v2,
+        YOP_LSHIFT_r1,
+        YOP_RSHIFT_v2,
+        YOP_RSHIFT_r1,
+    };
 
 
 
@@ -63,13 +97,22 @@ extern "C" {
 
         struct yaoosl_class* return_type;
 
+        enum yaoosl_encapsulation encapsulation;
+
+        // Start offset of this method in code-page
         size_t method_start;
+        // End offset of this method in code-page
+        size_t method_end;
+
+        // The scope-slots required by this method
+        size_t scope_slots;
     } yaoosl_method;
     typedef struct yaoosl_method_group
     {
         struct yaoosl_class* owning_type;
         char * name;
         size_t name_length;
+        enum yaoosl_operator operator_implementation;
 
         yaoosl_method * method;
         size_t          method_capacity;
@@ -86,6 +129,7 @@ extern "C" {
         size_t setter_start;
         size_t getter_start;
 
+        enum yaoosl_encapsulation encapsulation;
         bool has_data_field;
     } yaoosl_property;
     typedef struct yaoosl_class
@@ -94,9 +138,13 @@ extern "C" {
         size_t                 implements_capacity;
         size_t                 implements_size;
 
-        struct yaoosl_method * methods;
-        size_t                 methods_capacity;
-        size_t                 methods_size;
+        struct yaoosl_method_group * methods;
+        size_t                       methods_capacity;
+        size_t                       methods_size;
+
+        struct yaoosl_method_group * operators;
+        size_t                       operators_capacity;
+        size_t                       operators_size;
 
         struct yaoosl_property * properties;
         size_t                   properties_capacity;

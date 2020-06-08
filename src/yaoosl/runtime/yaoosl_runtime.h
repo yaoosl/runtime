@@ -10,6 +10,7 @@ extern "C" {
 	struct yaoosl_reference;
 	struct yaoosl_value;
 	struct yaoosl_runtime;
+	struct yaoosl_class;
 
 	enum yaoosl_opcodes;
 
@@ -34,6 +35,7 @@ extern "C" {
 		uint8_t * position;
 		uint8_t * position_start;
 		uint8_t * position_end;
+		struct yaoosl_class * local_class;
 
 		size_t                values_size;
 		struct yaoosl_value * values;
@@ -62,6 +64,7 @@ extern "C" {
 		yaoosl_runtime_fatal_callback fatal_callback;
 	} yaoosl_runtime;
 
+	bool yaoosl_runtime_push_scope(yaoosl_runtime* yvm, yaoosl_scope* scope);
 	struct yaoosl_reference* yaoosl_reference_create(yaoosl_runtime* yvm, struct yaoosl_class* type);
     yaoosl_scope* yaoosl_scope_create(size_t slots, struct yaoosl_code_page* page);
 	enum yaoosl_retcde yaoosl_runtime_execute(yaoosl_runtime* yvm, struct yaoosl_code_page* page, size_t offset);
