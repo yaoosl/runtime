@@ -4,6 +4,7 @@
 extern "C" {
 #endif // __cplusplus
 	struct yaoosl_code_page;
+	struct yaoosl_method;
 	struct yaoosl_class;
 
 	// Special struct containing a range of code.
@@ -57,6 +58,11 @@ extern "C" {
 		size_t	              usedtypes_capacity;
 		size_t	              usedtypes_size;
 		struct yaoosl_class** usedtypes;
+
+		// Methods declared and linked anywhere inside of this codepage.
+		size_t	               methods_capacity;
+		size_t	               methods_size;
+		struct yaoosl_method** methods;
 
 		// Sector informations for this code-page
 		size_t               sector_capacity;

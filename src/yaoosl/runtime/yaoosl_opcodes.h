@@ -13,8 +13,14 @@ extern "C" {
         // Takes the top-most value from the value-stack and pushes it again onto the value-stack
         YOPC_DUPLICATE_VALUE,
 
-        // Exit current method. If value should be returned, it needs to reside on value-stack already
+        // Exit current scope.
         YOPC_POP_SCOPE,
+        // Exits current scope and keeps the top-most value on the stack.
+        YOPC_POP_SCOPE_WITH_VALUE,
+
+        // Pops a value from the stack
+        // and calls it if it is indeed a delegate type
+        YOPC_CALL,
 
         // Pops a value from the stack,
         // checks if it is a reference type
@@ -70,6 +76,12 @@ extern "C" {
         YOPC_LOAD_IMMEDIATE_true,
         YOPC_LOAD_IMMEDIATE_false,
 
+        // Load delegate
+        YOPC_LOAD_DELEGATE_uint8,
+        YOPC_LOAD_DELEGATE_uint16,
+        YOPC_LOAD_DELEGATE_uint32,
+        YOPC_LOAD_DELEGATE_uint64,
+
         // JUMP X/<value> bytes in code. (F => Forward; B => Backward)
         YOPC_JUMP5B,
         YOPC_JUMP4B,
@@ -120,8 +132,8 @@ extern "C" {
         YOPC_MUL_r1,
         YOPC_DIV_v2,
         YOPC_DIV_r1,
-        YOPC_BIT_INV_v2,
-        YOPC_BIT_INV_r1,
+        YOPC_BIT_INV_v1,
+        YOPC_BIT_INV_r0,
         YOPC_BIT_OR_v2,
         YOPC_BIT_OR_r1,
         YOPC_BIT_XOR_v2,
@@ -133,8 +145,11 @@ extern "C" {
         YOPC_LOG_EQUAL_v2,
         YOPC_LOG_NOTEQUAL_v2,
         YOPC_LOG_LESS_THEN_v2,
+        YOPC_LOG_LESS_THEN_OR_EQUAL_v2,
         YOPC_LOG_GREATER_THEN_v2,
+        YOPC_LOG_GREATER_THEN_OR_EQUAL_v2,
         YOPC_MOD_v2,
+        YOPC_MOD_r1,
         YOPC_LSHIFT_v2,
         YOPC_LSHIFT_r1,
         YOPC_RSHIFT_v2,
