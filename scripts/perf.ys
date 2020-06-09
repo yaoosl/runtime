@@ -1,5 +1,0 @@
-for (var i = 0x0; i < 0xFFFF; i++)
-{
-//    Yaoosl.Console.WriteLine(i.ToString());
-}
-
