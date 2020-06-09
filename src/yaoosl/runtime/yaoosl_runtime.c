@@ -6,6 +6,7 @@
 #include <malloc.h>
 #include <string.h>
 
+
 bool yaoosl_runtime_push_scope(yaoosl_runtime* yvm, yaoosl_scope* scope)
 {
     yaoosl_scope** tmp;
@@ -46,29 +47,17 @@ yaoosl_scope* yaoosl_scope_create(size_t slots, yaoosl_code_page* page)
 
 #pragma region Code Generating Macros
 #define OPEXEC0_PRE(PRE, OP)\
-case YVT_DOUBLE:  OP PRE ## as.d      ; break;\
-case YVT_BOOLEAN: OP PRE ## as.flag   ; break;\
-case YVT_FLOAT:   OP PRE ## as.f      ; break;\
-case YVT_INT8:    OP PRE ## as.int8   ; break;\
-case YVT_INT16:   OP PRE ## as.int16  ; break;\
-case YVT_INT32:   OP PRE ## as.int32  ; break;\
-case YVT_INT64:   OP PRE ## as.int64  ; break;\
-case YVT_UINT8:   OP PRE ## as.uint8  ; break;\
-case YVT_UINT16:  OP PRE ## as.uint16 ; break;\
-case YVT_UINT32:  OP PRE ## as.uint32 ; break;\
-case YVT_UINT64:  OP PRE ## as.uint64 ; break;
-#define OPEXEC0_POST(PRE, OP)\
-case YVT_DOUBLE:  PRE ## as.d      OP ; break;\
-case YVT_BOOLEAN: PRE ## as.flag   OP ; break;\
-case YVT_FLOAT:   PRE ## as.f      OP ; break;\
-case YVT_INT8:    PRE ## as.int8   OP ; break;\
-case YVT_INT16:   PRE ## as.int16  OP ; break;\
-case YVT_INT32:   PRE ## as.int32  OP ; break;\
-case YVT_INT64:   PRE ## as.int64  OP ; break;\
-case YVT_UINT8:   PRE ## as.uint8  OP ; break;\
-case YVT_UINT16:  PRE ## as.uint16 OP ; break;\
-case YVT_UINT32:  PRE ## as.uint32 OP ; break;\
-case YVT_UINT64:  PRE ## as.uint64 OP ; break;
+case YVT_DOUBLE:  OP ( PRE ## as.d      ); break;\
+case YVT_BOOLEAN: OP ( PRE ## as.flag   ); break;\
+case YVT_FLOAT:   OP ( PRE ## as.f      ); break;\
+case YVT_INT8:    OP ( PRE ## as.int8   ); break;\
+case YVT_INT16:   OP ( PRE ## as.int16  ); break;\
+case YVT_INT32:   OP ( PRE ## as.int32  ); break;\
+case YVT_INT64:   OP ( PRE ## as.int64  ); break;\
+case YVT_UINT8:   OP ( PRE ## as.uint8  ); break;\
+case YVT_UINT16:  OP ( PRE ## as.uint16 ); break;\
+case YVT_UINT32:  OP ( PRE ## as.uint32 ); break;\
+case YVT_UINT64:  OP ( PRE ## as.uint64 ); break;
 #pragma endregion
 
 
@@ -184,6 +173,83 @@ static bool lookup_method_no_args(yaoosl_method* out_method, yaoosl_method_group
 }
 
 /*
+    summary:
+        Looks up a method matching the arguments residing on the value stack currently
+        and the return-type.
+    remarks:
+        Analyzes the value-stack of the runtime.
+    returns:
+        true: Method found.
+        false: Method not found.
+*/
+static bool lookup_method_analyzing_value_stack(
+    yaoosl_runtime* yvm,
+    yaoosl_method* out_method,
+    yaoosl_method_group method_group,
+    yaoosl_class* method_owner,
+    yaoosl_scope* scope0,
+    yaoosl_class* return_type)
+{
+    yaoosl_method method;
+    size_t i, j;
+    yaoosl_value value0;
+    bool match;
+    for (i = 0; i < method_group.method_size; i++)
+    {
+        method = method_group.method[i];
+
+        // Ensure Argcount
+        if (method.args_size > yvm->values_size) { continue; }
+
+
+        // Ensure Argtypes
+        match = false;
+        for (j = 0; j < method.args_size; j++)
+        {
+            value0 = yvm->values[yvm->values_size - j];
+            if (value0.type == YVT_REFERENCE)
+            {
+                if (method.args[j].type != value0.as.reference->type)
+                {
+                    match = false;
+                    break;
+                }
+            }
+            else if (value0.type != method.args[j].valtype)
+            {
+                match = false;
+                break;
+            }
+        }
+        if (!match) { continue; }
+
+        // Ensure Returntype
+        if (method.return_type != return_type) { continue; }
+
+        // Ensure Accessrights
+        switch (method.encapsulation)
+        {
+        case YENCPS_INTERNAL: if (strncmp(method_owner->full_namespace, scope0->local_class->full_namespace, strlen(scope0->local_class))) { continue; }  break;
+        case YENCPS_DERIVED:
+            for (j = 0; j < method_owner->implements_size; j++)
+            {
+                if (method_owner->implements[i] == scope0->local_class)
+                {
+                    break;
+                }
+            }
+            if (method_owner->implements_size == j) { continue; }
+            break;
+        case YENCPS_PRIVATE: if (method_owner != scope0->local_class) { continue; } break;
+        }
+
+        *out_method = method;
+        return true;
+    }
+    return false;
+}
+
+/*
     returns:
         true: method group found
         false: method group not found
@@ -230,6 +296,10 @@ static int call_method(yaoosl_runtime* yvm, yaoosl_class* owning_type, yaoosl_me
 }
 
 /*
+    valuestack-in:
+        0: The value to enact the op_r0 on
+    valuestack-out:
+        0: The value that was enacted
     returns:
         0: success
         1: ERR_MSG_VALUE_STACK_EMPTY
@@ -240,6 +310,31 @@ static int call_method(yaoosl_runtime* yvm, yaoosl_class* owning_type, yaoosl_me
         6: ERR_MSG_STACK_CORRUPTION_OPERATOR_CALLABLE
 */
 static int handle_op_r0(yaoosl_runtime* yvm, yaoosl_scope* scope0, enum yaoosl_operator operator)
+{
+}
+/*
+    valuestack-in:
+        0: The value to enact the op_r1 on
+        1: The first argument
+    valuestack-out:
+        0: The value that was enacted
+    returns:
+        0: success
+*/
+static int handle_op_r1(yaoosl_runtime* yvm, yaoosl_scope* scope0, enum yaoosl_operator op)
+{
+
+}
+/*
+    valuestack-in:
+        0: The value to enact the op_b1 on
+        1: The first argument
+    valuestack-out:
+        0: The value that was enacted
+    returns:
+        0: success
+*/
+static int handle_op_v1(yaoosl_runtime* yvm, yaoosl_scope* scope0, enum yaoosl_operator op)
 {
     yaoosl_value value0;
     yaoosl_method_group method_group;
@@ -253,7 +348,7 @@ static int handle_op_r0(yaoosl_runtime* yvm, yaoosl_scope* scope0, enum yaoosl_o
         {
             return 2;
         }
-        if (lookup_op_method_group(value0.as.reference->type, operator, &method_group))
+        if (lookup_op_method_group(value0.as.reference->type, op, &method_group))
         {
             // Lookup matching method in method-group
             if (lookup_method_no_args(&method, method_group, value0.as.reference->type, scope0))
@@ -274,19 +369,31 @@ static int handle_op_r0(yaoosl_runtime* yvm, yaoosl_scope* scope0, enum yaoosl_o
             return 4;
         }
     } break;
-    case YVT_PROPERTY: {
-        switch (value0.as.prop.value->type)
-        {
-            OPEXEC0_POST(value0.as.prop.value->, ++)
-        default:
-            return 5;
-        }
-    } break;
     case YVT_CALLABLE: return 6;
-        OPEXEC0_POST(value0., ++)
+    case YVT_PROPERTY:
+        value0 = *value0.as.prop.value;
+        /* FALL THROUGH */
+    default:
+        switch (op)
+        {
+        case YOPC_NOT_v1: switch (value0.type) { OPEXEC0_PRE(value0., !) } break;
+        }
     }
 }
+/*
+    valuestack-in:
+        0: The value to enact the op_r2 on
+        1: The left argument
+        1: The right argument
+    valuestack-out:
+        0: The value that was enacted
+    returns:
+        0: success
+*/
+static int handle_op_v2(yaoosl_runtime* yvm, yaoosl_scope* scope0, enum yaoosl_operator op)
+{
 
+}
 
 enum yaoosl_retcde yaoosl_runtime_execute(yaoosl_runtime* yvm, yaoosl_code_page* page, size_t offset)
 {
@@ -303,6 +410,7 @@ enum yaoosl_retcde yaoosl_runtime_execute(yaoosl_runtime* yvm, yaoosl_code_page*
     yaoosl_method_group method_group;
     yaoosl_method method;
     yaoosl_class* typeptr;
+    enum yaoosl_operator op;
     bool flag = false;
     yaoosl_runtime_push_scope(yvm, scope0);
 	while (cur_scope < yvm->scopes_size)
@@ -488,8 +596,17 @@ enum yaoosl_retcde yaoosl_runtime_execute(yaoosl_runtime* yvm, yaoosl_code_page*
             goto YOPC_JUMP;
 #pragma endregion
 #pragma region Operators
-        case YOPC_INC_r0: {
-            switch (handle_op_r0(yvm, scope0, YOP_INC_r0))
+#pragma region YOPC_OP_r0
+
+        case YOPC_INC_r0:
+            op = YOP_INC_r0;
+            goto YOPC_OP_r0;
+        case YOPC_DEC_r0:
+            op = YOP_DEC_r0;
+            goto YOPC_OP_r0;
+
+        YOPC_OP_r0:
+            switch (handle_op_r0(yvm, scope0, op))
             {
             case 1: if (!yvm->fatal_callback || yvm->fatal_callback(yvm, opcode, ERR_MSG_VALUE_STACK_EMPTY)) { return YSRC_FATAL; } continue;
             case 2: if (!yaoosl_runtime_throw_NPE(yvm)) { return YSRC_ERROR; } continue;
@@ -498,66 +615,144 @@ enum yaoosl_retcde yaoosl_runtime_execute(yaoosl_runtime* yvm, yaoosl_code_page*
             case 5: if (!yvm->fatal_callback || yvm->fatal_callback(yvm, opcode, ERR_MSG_STACK_CORRUPTION_OPERATOR_PROPERTY)) { return YSRC_FATAL; } continue;
             case 6: if (!yvm->fatal_callback || yvm->fatal_callback(yvm, opcode, ERR_MSG_STACK_CORRUPTION_OPERATOR_CALLABLE)) { return YSRC_FATAL; } continue;
             }
-        } break;
-        case YOPC_DEC_r0: {
-        } break;
-        case YOPC_NOT_v1: {
-        } break;
-        case YOPC_ADD_v2: {
-        } break;
-        case YOPC_ADD_r1: {
-        } break;
-        case YOPC_SUB_v2: {
-        } break;
-        case YOPC_SUB_r1: {
-        } break;
-        case YOPC_MUL_v2: {
-        } break;
-        case YOPC_MUL_r1: {
-        } break;
-        case YOPC_DIV_v2: {
-        } break;
-        case YOPC_DIV_r1: {
-        } break;
-        case YOPC_BIT_INV_v2: {
-        } break;
-        case YOPC_BIT_INV_r1: {
-        } break;
-        case YOPC_BIT_OR_v2: {
-        } break;
-        case YOPC_BIT_OR_r1: {
-        } break;
-        case YOPC_BIT_XOR_v2: {
-        } break;
-        case YOPC_BIT_XOR_r1: {
-        } break;
-        case YOPC_BIT_AND_v2: {
-        } break;
-        case YOPC_BIT_AND_r1: {
-        } break;
-        case YOPC_LOG_OR_v2: {
-        } break;
-        case YOPC_LOG_AND_v2: {
-        } break;
-        case YOPC_LOG_EQUAL_v2: {
-        } break;
-        case YOPC_LOG_NOTEQUAL_v2: {
-        } break;
-        case YOPC_LOG_LESS_THEN_v2: {
-        } break;
-        case YOPC_LOG_GREATER_THEN_v2: {
-        } break;
-        case YOPC_MOD_v2: {
-        } break;
-        case YOPC_LSHIFT_v2: {
-        } break;
-        case YOPC_LSHIFT_r1: {
-        } break;
-        case YOPC_RSHIFT_v2: {
-        } break;
-        case YOPC_RSHIFT_r1: {
-        } break;
+            break;
+#pragma endregion
+#pragma region YOPC_OP_r1
+
+        case YOPC_ADD_r1:
+            op = YOP_ADD_r1;
+            goto YOPC_OP_r1;
+        case YOPC_SUB_r1:
+            op = YOP_SUB_r1;
+            goto YOPC_OP_r1;
+        case YOPC_MUL_r1:
+            op = YOP_MUL_r1;
+            goto YOPC_OP_r1;
+        case YOPC_DIV_r1:
+            op = YOP_DIV_r1;
+            goto YOPC_OP_r1;
+        case YOPC_RSHIFT_r1:
+            op = YOP_RSHIFT_r1;
+            goto YOPC_OP_r1;
+        case YOPC_LSHIFT_r1:
+            op = YOP_LSHIFT_r1;
+            goto YOPC_OP_r1;
+        case YOPC_BIT_AND_r1:
+            op = YOP_BIT_AND_r1;
+            goto YOPC_OP_r1;
+        case YOPC_BIT_INV_r1:
+            op = YOP_BIT_INV_r1;
+            goto YOPC_OP_r1;
+        case YOPC_BIT_OR_r1:
+            op = YOP_BIT_OR_r1;
+            goto YOPC_OP_r1;
+        case YOPC_BIT_XOR_r1:
+            op = YOP_BIT_XOR_r1;
+            goto YOPC_OP_r1;
+        YOPC_OP_r1:
+            switch (handle_op_r1(yvm, scope0, op))
+            {
+            }
+            break;
+#pragma endregion
+#pragma region YOPC_OP_v1
+        case YOPC_NOT_v1:
+            op = YOP_ADD_r1;
+            goto YOPC_OP_v1;
+        YOPC_OP_v1:
+            switch (handle_op_v1(yvm, scope0, op))
+            {
+            }
+            break;
+#pragma endregion
+#pragma region YOPC_OP_v2
+        case YOPC_ADD_v2:
+            op = YOP_ADD_v2;
+            goto YOPC_OP_v2;
+        case YOPC_SUB_v2:
+            op = YOP_SUB_v2;
+            goto YOPC_OP_v2;
+        case YOPC_MUL_v2:
+            op = YOP_MUL_v2;
+            goto YOPC_OP_v2;
+        case YOPC_DIV_v2:
+            op = YOP_DIV_v2;
+            goto YOPC_OP_v2;
+        case YOPC_BIT_INV_v2:
+            op = YOP_BIT_INV_v2;
+            goto YOPC_OP_v2;
+        case YOPC_BIT_OR_v2:
+            op = YOP_BIT_OR_v2;
+            goto YOPC_OP_v2;
+        case YOPC_BIT_XOR_v2:
+            op = YOP_BIT_XOR_v2;
+            goto YOPC_OP_v2;
+        case YOPC_BIT_AND_v2:
+            op = YOP_BIT_AND_v2;
+            goto YOPC_OP_v2;
+        case YOPC_LOG_OR_v2:
+            op = YOP_BIT_OR_v2;
+            goto YOPC_OP_v2;
+        case YOPC_LOG_AND_v2:
+            op = YOP_LOG_AND_v2;
+            goto YOPC_OP_v2;
+        case YOPC_LOG_EQUAL_v2:
+            op = YOP_LOG_EQUAL_v2;
+            goto YOPC_OP_v2;
+        case YOPC_LOG_NOTEQUAL_v2:
+            op = YOP_LOG_NOTEQUAL_v2;
+            goto YOPC_OP_v2;
+        case YOPC_LOG_LESS_THEN_v2:
+            op = YOP_LOG_LESS_THEN_v2;
+            goto YOPC_OP_v2;
+        case YOPC_LOG_GREATER_THEN_v2:
+            op = YOP_LOG_GREATER_THEN_v2;
+            goto YOPC_OP_v2;
+        case YOPC_MOD_v2:
+            op = YOP_MOD_v2;
+            goto YOPC_OP_v2;
+        case YOPC_LSHIFT_v2:
+            op = YOP_LSHIFT_v2;
+            goto YOPC_OP_v2;
+        case YOPC_RSHIFT_v2:
+            op = YOP_RSHIFT_v2;
+            goto YOPC_OP_v2;
+        YOPC_OP_v2:
+            switch (handle_op_v2(yvm, scope0, op))
+            {
+            }
+            break;
+#pragma endregion
 #pragma endregion
 		}
 	}
+}
+
+
+yaoosl_runtime* yaoosl_runtime_create()
+{
+    yaoosl_runtime* yvm = malloc(sizeof(yaoosl_runtime));
+    if (yvm)
+    {
+        // Init runtime to defaults
+        memset(yvm, 0, sizeof(yaoosl_runtime));
+        
+        // Allocate space for Yaoosl. codepage, containing the default-types
+        yvm->code_pages = malloc(sizeof(yaoosl_code_page));
+        if (!yvm->code_pages)
+        {
+            free(yvm);
+            return 0;
+        }
+        yvm->code_pages_capacity = 1;
+        yvm->code_pages_size = 1;
+
+        // Store the default-types
+    }
+    return yvm;
+}
+
+void yaoosl_runtime_destroy(yaoosl_runtime* runtime)
+{
+    
 }

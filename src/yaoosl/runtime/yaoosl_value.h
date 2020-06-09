@@ -87,6 +87,7 @@ extern "C" {
         char * name;
         size_t name_length;
         struct yaoosl_class * type;
+        enum yaoosl_value_type valtype;
     } yaoosl_arg;
     typedef struct yaoosl_method
     {
@@ -151,6 +152,9 @@ extern "C" {
         size_t                   properties_size;
 
         struct yaoosl_code_page* declaring_code_page;
+
+        // Unless YVT_NA, this type belongs to a primitive
+        enum yaoosl_value_type value_type;
 
 
         enum yaoosl_encapsulation encapsulation;
@@ -237,6 +241,24 @@ extern "C" {
         ret.as.callable.code_page = type->declaring_code_page;
         ret.as.prop.value = mthd;
         return ret;
+    }
+
+
+    static yaoosl_class* create_yaoosl_class(enum yaoosl_encapsulation encapsulation, const char* ns, const char* name)
+    {
+        yaoosl_class* type;
+        size_t ns_len = strlen(ns);
+        size_t name_len = strlen(name);
+        type = malloc(sizeof(yaoosl_class) + (sizeof(char) * (ns_len + 1)) + (sizeof(char) * (name_len + 1)));
+        if (type)
+        {
+            type->full_namespace = ((void*)type) + sizeof(yaoosl_class);
+            type->name = ((void*)type) + sizeof(yaoosl_class) + (sizeof(char) * (ns_len + 1));
+            strncpy(type->full_namespace, ns, ns_len);
+            strncpy(type->name, name, name_len);
+            type->encapsulation = encapsulation;
+        }
+        return type;
     }
 
 #ifdef __cplusplus

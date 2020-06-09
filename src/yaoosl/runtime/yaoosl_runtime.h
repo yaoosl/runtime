@@ -61,8 +61,15 @@ extern "C" {
 		size_t                values_capacity;
 		size_t                values_size;
 
+		struct yaoosl_code_page * code_pages;
+		size_t                    code_pages_capacity;
+		size_t                    code_pages_size;
+
 		yaoosl_runtime_fatal_callback fatal_callback;
 	} yaoosl_runtime;
+	
+	yaoosl_runtime* yaoosl_runtime_create();
+	void yaoosl_runtime_destroy(yaoosl_runtime* runtime);
 
 	bool yaoosl_runtime_push_scope(yaoosl_runtime* yvm, yaoosl_scope* scope);
 	struct yaoosl_reference* yaoosl_reference_create(yaoosl_runtime* yvm, struct yaoosl_class* type);

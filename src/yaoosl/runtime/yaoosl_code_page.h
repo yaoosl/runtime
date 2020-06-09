@@ -54,8 +54,8 @@ extern "C" {
 	typedef struct yaoosl_code_page
 	{
 		// Typemap where the used types get put into.
-		size_t	        usedtypes_capacity;
-		size_t	        usedtypes_size;
+		size_t	              usedtypes_capacity;
+		size_t	              usedtypes_size;
 		struct yaoosl_class** usedtypes;
 
 		// Sector informations for this code-page
