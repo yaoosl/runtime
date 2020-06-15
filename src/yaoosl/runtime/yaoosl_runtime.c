@@ -705,11 +705,11 @@ static int handle_op_v2(yaoosl_runtime* yvm, yaoosl_scope* scope0, enum yaoosl_o
 #define YVMSCPVAL (yvm->values_size - (scope_active->values - yvm->values))
 enum yaoosl_retcde yaoosl_runtime_execute(yaoosl_runtime* yvm, yaoosl_code_page* page, size_t offset, yaoosl_classtemplate* local_class)
 {
-	size_t cur_scope = yvm->scopes_size;
+    size_t cur_scope = yvm->scopes_size;
     size_t i = 0;
     size_t j = 0;
-	yaoosl_scope* scope_active;
-	enum yaoosl_opcodes opcode;
+    yaoosl_scope* scope_active;
+    enum yaoosl_opcodes opcode;
     yaoosl_as as0;
     yaoosl_value value0;
     yaoosl_value value1;
@@ -726,8 +726,8 @@ enum yaoosl_retcde yaoosl_runtime_execute(yaoosl_runtime* yvm, yaoosl_code_page*
     scope_active->local_class = local_class;
 
     // Start execution loop
-	while (cur_scope < yvm->scopes_size)
-	{
+    while (cur_scope < yvm->scopes_size)
+    {
         if (scope_active->position >= scope_active->position_end)
         {
             yvm->scopes_size--;
@@ -737,9 +737,9 @@ enum yaoosl_retcde yaoosl_runtime_execute(yaoosl_runtime* yvm, yaoosl_code_page*
             }
             continue;
         }
-		opcode = *(scope_active->position++);
-		switch (opcode)
-		{
+        opcode = *(scope_active->position++);
+        switch (opcode)
+        {
         default: if (!yvm->fatal_callback || yvm->fatal_callback(yvm, opcode, ERR_MSG_UNKNOWN_INSTRUCTION)) { return YSRC_FATAL; } break;
         case YOPC_NOP: /* DO NOTHING */ break;
         case YOPC_BREAK: /* DEBUG HALT REACHED */ return YSRC_BREAK;
@@ -891,6 +891,56 @@ enum yaoosl_retcde yaoosl_runtime_execute(yaoosl_runtime* yvm, yaoosl_code_page*
         case YOPC_LOAD_IMMEDIATE_false:  value0 = yaoosl_value_from_bool(false); goto YOPC_LOAD_IMMEDIATE;
         YOPC_LOAD_IMMEDIATE:
             if (!push_value_stack(yvm, value0)) { return YSRC_OUT_OF_MEMORY; }
+            break;
+#pragma endregion
+#pragma region YOPC_ARRAY_CREATE
+        case YOPC_ARRAY_CREATE0:
+        case YOPC_ARRAY_CREATE1:
+        case YOPC_ARRAY_CREATE2:
+        case YOPC_ARRAY_CREATE3:
+        case YOPC_ARRAY_CREATE4:
+        case YOPC_ARRAY_CREATE_uint8:
+        case YOPC_ARRAY_CREATE_uint16:
+        case YOPC_ARRAY_CREATE_uint32:
+        case YOPC_ARRAY_CREATE_uint64:
+        YOPC_ARRAY_CREATE:
+            break;
+#pragma endregion
+#pragma region YOPC_ARRAY_RESIZE
+        case YOPC_ARRAY_RESIZE_uint8:
+        case YOPC_ARRAY_RESIZE_uint16:
+        case YOPC_ARRAY_RESIZE_uint32:
+        case YOPC_ARRAY_RESIZE_uint64:
+        case YOPC_ARRAY_RESIZE_DYN:
+        YOPC_ARRAY_RESIZE:
+            break;
+#pragma endregion
+#pragma region YOPC_ARRAY_SET
+        case YOPC_ARRAY_SET0:
+        case YOPC_ARRAY_SET1:
+        case YOPC_ARRAY_SET2:
+        case YOPC_ARRAY_SET3:
+        case YOPC_ARRAY_SET4:
+        case YOPC_ARRAY_SET_uint8:
+        case YOPC_ARRAY_SET_uint16:
+        case YOPC_ARRAY_SET_uint32:
+        case YOPC_ARRAY_SET_uint64:
+        case YOPC_ARRAY_SET_DYN:
+        YOPC_ARRAY_SET:
+            break;
+#pragma endregion
+#pragma region YOPC_ARRAY_GET
+        case YOPC_ARRAY_GET0:
+        case YOPC_ARRAY_GET1:
+        case YOPC_ARRAY_GET2:
+        case YOPC_ARRAY_GET3:
+        case YOPC_ARRAY_GET4:
+        case YOPC_ARRAY_GET_uint8:
+        case YOPC_ARRAY_GET_uint16:
+        case YOPC_ARRAY_GET_uint32:
+        case YOPC_ARRAY_GET_uint64:
+        case YOPC_ARRAY_GET_DYN:
+        YOPC_ARRAY_GET:
             break;
 #pragma endregion
 #pragma region YOPC_LOAD_DELEGATE
@@ -1126,8 +1176,8 @@ enum yaoosl_retcde yaoosl_runtime_execute(yaoosl_runtime* yvm, yaoosl_code_page*
             }
             break;
 #pragma endregion
-		}
-	}
+        }
+    }
     return YSRC_OKAY;
 }
 

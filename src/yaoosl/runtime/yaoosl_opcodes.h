@@ -76,6 +76,63 @@ extern "C" {
         YOPC_LOAD_IMMEDIATE_true,
         YOPC_LOAD_IMMEDIATE_false,
 
+        // Creates a new array on the value stack with a size of X/<value>
+        YOPC_ARRAY_CREATE0,
+        YOPC_ARRAY_CREATE1,
+        YOPC_ARRAY_CREATE2,
+        YOPC_ARRAY_CREATE3,
+        YOPC_ARRAY_CREATE4,
+        YOPC_ARRAY_CREATE_uint8,
+        YOPC_ARRAY_CREATE_uint16,
+        YOPC_ARRAY_CREATE_uint32,
+        YOPC_ARRAY_CREATE_uint64,
+
+        // Resizes an array on the value stack to the size of X/<value>
+        // DYN will take the targeted value, attempt to read it as 
+        // a valid integral type and use it for the array.
+        // DYN VAL STACK N-0: Target Size as Integral
+        //     VAL STACK N-1: Array to resize
+        YOPC_ARRAY_RESIZE_uint8,
+        YOPC_ARRAY_RESIZE_uint16,
+        YOPC_ARRAY_RESIZE_uint32,
+        YOPC_ARRAY_RESIZE_uint64,
+        YOPC_ARRAY_RESIZE_DYN,
+
+        // Updates a slot of an array on the value stack with another value.
+        // Slot is provided by X/<value>
+        // DYN will take the targeted value, attempt to read it as 
+        // a valid integral type and use it for the array.
+        // DYN VAL STACK N-0: Target Size as Integral
+        //     VAL STACK N-1: Value to set
+        //     VAL STACK N-2: Array to update
+        YOPC_ARRAY_SET0,
+        YOPC_ARRAY_SET1,
+        YOPC_ARRAY_SET2,
+        YOPC_ARRAY_SET3,
+        YOPC_ARRAY_SET4,
+        YOPC_ARRAY_SET_uint8,
+        YOPC_ARRAY_SET_uint16,
+        YOPC_ARRAY_SET_uint32,
+        YOPC_ARRAY_SET_uint64,
+        YOPC_ARRAY_SET_DYN,
+
+        // Reads a slot of an array onto the value stack.
+        // Slot is provided by X/<value>
+        // DYN will take the targeted value, attempt to read it as 
+        // a valid integral type and use it for the array.
+        // DYN VAL STACK N-0: Target Size as Integral
+        //     VAL STACK N-1: Array to update
+        YOPC_ARRAY_GET0,
+        YOPC_ARRAY_GET1,
+        YOPC_ARRAY_GET2,
+        YOPC_ARRAY_GET3,
+        YOPC_ARRAY_GET4,
+        YOPC_ARRAY_GET_uint8,
+        YOPC_ARRAY_GET_uint16,
+        YOPC_ARRAY_GET_uint32,
+        YOPC_ARRAY_GET_uint64,
+        YOPC_ARRAY_GET_DYN,
+
         // Load delegate
         YOPC_LOAD_DELEGATE_uint8,
         YOPC_LOAD_DELEGATE_uint16,
@@ -154,7 +211,7 @@ extern "C" {
         YOPC_LSHIFT_r1,
         YOPC_RSHIFT_v2,
         YOPC_RSHIFT_r1,
-	};
+    };
 
 #ifdef __cplusplus
 }

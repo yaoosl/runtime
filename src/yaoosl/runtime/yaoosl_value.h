@@ -16,6 +16,7 @@ extern "C" {
     struct yaoosl_reference;
     struct yaoosl_value_reference;
     struct yaoosl_value;
+    struct yaoosl_value_array;
     typedef struct yaoosl_reference* yaoosl_ref;
     typedef void (*yaoosl_class_callback)(struct yaoosl_runtime* yvm, yaoosl_ref reference, void* userdata);
 
@@ -34,6 +35,7 @@ extern "C" {
         YVT_DELEGATE,
         YVT_FIELD,
         YVT_CLASSTEMPLATE,
+        YVT_ARRAY,
         YVT_DOUBLE,
         YVT_BOOLEAN,
         YVT_FLOAT,
@@ -124,6 +126,7 @@ extern "C" {
         yaoosl_ref reference;
         struct yaoosl_method delegate;
         struct yaoosl_value* field;
+        struct yaoosl_value_array* array;
         struct yaoosl_classtemplate* classtemplate;
     } yaoosl_as;
     typedef struct yaoosl_arg
@@ -159,6 +162,12 @@ extern "C" {
         bool has_data_field;
     } yaoosl_property;
 
+    typedef struct yaoosl_value_array
+    {
+        size_t capacity;
+        size_t size;
+        struct yaoosl_value* values;
+    } yaoosl_value_array;
     typedef struct yaoosl_classtemplate
     {
         struct yaoosl_class ** implements;
