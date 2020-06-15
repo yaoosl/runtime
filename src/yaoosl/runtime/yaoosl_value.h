@@ -23,9 +23,23 @@ extern "C" {
 
     enum yaoosl_encapsulation
     {
+        // Special Encapsulation.
+        // Supposed to aid in compiler creation where temporary dummy
+        // classtemplates/methods/... are needed.
+        // Dummy checks may be made by checking if the encapsulation field is "false".
+        YENCPS_DUMMY = 0,
+
+        // Visible to everybody.
         YENCPS_PUBLIC,
+
+        // Visible only to same-namespace and below (My.Namespace -> My.Namespace.Fancy).
+        // Namespaces above (My.Namespace -> My) cannot see/use this.
         YENCPS_INTERNAL,
+
+        // Only visible to derived entities.
         YENCPS_DERIVED,
+
+        // Only visible in this very entity.
         YENCPS_PRIVATE
     };
     enum yaoosl_value_type
@@ -150,9 +164,6 @@ extern "C" {
     typedef struct yaoosl_property
     {
         struct yaoosl_class* owning_type;
-        yaoosl_arg * args;
-        size_t       args_capacity;
-        size_t       args_size;
 
         struct yaoosl_class* return_type;
         size_t setter_start;
@@ -168,11 +179,16 @@ extern "C" {
         size_t size;
         struct yaoosl_value* values;
     } yaoosl_value_array;
+
+    /*
+        To create a class-dummy, check the encapsulation.
+        if it is set to
+    */
     typedef struct yaoosl_classtemplate
     {
-        struct yaoosl_class ** implements;
-        size_t                 implements_capacity;
-        size_t                 implements_size;
+        struct yaoosl_classtemplate** implements;
+        size_t                        implements_capacity;
+        size_t                        implements_size;
 
         struct yaoosl_method_group * methods;
         size_t                       methods_capacity;
@@ -182,7 +198,7 @@ extern "C" {
         size_t                   properties_capacity;
         size_t                   properties_size;
 
-        struct yaoosl_code_page* declaring_code_page;
+        struct yaoosl_code_page * declaring_code_page;
 
         // Unless YVT_NA, this type belongs to a primitive
         enum yaoosl_value_type value_type;
@@ -229,7 +245,11 @@ extern "C" {
     static yaoosl_value yaoosl_value_from_method(yaoosl_method mthd) { yaoosl_value ret; ret.type = YVT_DELEGATE;  ret.as.delegate  = mthd;         return ret; }
 
 
-    yaoosl_classtemplate* create_yaoosl_classtemplate(enum yaoosl_encapsulation encapsulation, const char* ns, const char* name);
+    yaoosl_classtemplate* yaoosl_classtemplate_create(struct yaoosl_code_page* owner, enum yaoosl_encapsulation encapsulation, const char* ns, const char* name);
+    void yaoosl_classtemplate_destroy(yaoosl_classtemplate* classtemplate);
+    void yaoosl_method_group_destroy(yaoosl_method_group method_group);
+    void yaoosl_method_destroy(yaoosl_method method);
+    void yaoosl_arg_destroy(yaoosl_arg arg);
 
 #ifdef __cplusplus
 }

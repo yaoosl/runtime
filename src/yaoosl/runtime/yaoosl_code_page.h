@@ -54,10 +54,15 @@ extern "C" {
 
     typedef struct yaoosl_code_page
     {
+        // The classes declared in this code-page.
+        size_t	               declared_types_capacity;
+        size_t	               declared_types_size;
+        struct yaoosl_class ** declared_types;
+
         // Typemap where the used types get put into.
-        size_t	              usedtypes_capacity;
-        size_t	              usedtypes_size;
-        struct yaoosl_class** usedtypes;
+        size_t	               usedtypes_capacity;
+        size_t	               usedtypes_size;
+        struct yaoosl_class ** usedtypes;
 
         // Methods declared and linked anywhere inside of this codepage.
         size_t	               methods_capacity;
