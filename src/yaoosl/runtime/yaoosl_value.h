@@ -142,6 +142,7 @@ extern "C" {
         struct yaoosl_value* field;
         struct yaoosl_value_array* array;
         struct yaoosl_classtemplate* classtemplate;
+        struct yaoosl_classtemplate** classtemplate_p2;
     } yaoosl_as;
     typedef struct yaoosl_arg
     {

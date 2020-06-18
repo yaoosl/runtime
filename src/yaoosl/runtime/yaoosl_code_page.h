@@ -5,7 +5,7 @@ extern "C" {
 #endif // __cplusplus
     struct yaoosl_code_page;
     struct yaoosl_method;
-    struct yaoosl_class;
+    struct yaoosl_classtemplate;
 
     // Special struct containing a range of code.
     // May be passed into a method or similar as its body.
@@ -55,14 +55,14 @@ extern "C" {
     typedef struct yaoosl_code_page
     {
         // The classes declared in this code-page.
-        size_t	               declared_types_capacity;
-        size_t	               declared_types_size;
-        struct yaoosl_class ** declared_types;
+        size_t	                       declared_types_capacity;
+        size_t	                       declared_types_size;
+        struct yaoosl_classtemplate ** declared_types;
 
         // Typemap where the used types get put into.
-        size_t	               usedtypes_capacity;
-        size_t	               usedtypes_size;
-        struct yaoosl_class ** usedtypes;
+        size_t	                       usedtypes_capacity;
+        size_t	                       usedtypes_size;
+        struct yaoosl_classtemplate ** usedtypes;
 
         // Methods declared and linked anywhere inside of this codepage.
         size_t	               methods_capacity;
